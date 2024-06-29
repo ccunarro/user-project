@@ -15,7 +15,7 @@ public class SimpleUserDetails implements UserDetails {
 
     private final User user;
 
-    Set<GrantedAuthority> authorities = new HashSet<>();
+    private Set<GrantedAuthority> authorities = new HashSet<>();
 
     public SimpleUserDetails(User user) {
         this.user = user;
@@ -45,6 +45,7 @@ public class SimpleUserDetails implements UserDetails {
         return user.getEmail();
     }
 
+    @Override
     public boolean isAccountNonExpired() {
         return true;
     }

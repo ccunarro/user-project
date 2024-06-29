@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlGroup;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -24,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class UserControllerTest {
+class UserControllerIntTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -135,7 +133,7 @@ class UserControllerTest {
     @Test
     void testCreateUserDuplicatedEmail() throws Exception {
         var email = "duplikated@gmail.com";
-        var user = userService.createUser(email, "Dupli Kated", "0394934sfhajdfhclsahds");
+        userService.createUser(email, "Dupli Kated", "0394934sfhajdfhclsahds");
 
         UserRequest request = new UserRequest();
         request.setEmail(email);
@@ -164,6 +162,63 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors", hasSize(1)))
                 .andExpect(jsonPath("$.errors[0]").value("User not found for id " + inexistentUserId));
+    }
+
+    @Test
+    void testGetUserWithNoAuthentication() throws Exception {
+        var email = "unauthenticated@gmail.com";
+        var password = "saoaifca32329";
+        var user = userService.createUser(email, "No Authentication", password);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/{userId}/", user.id())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testAddProjectToDifferentUserShouldFail() throws Exception {
+        var email1 = "user1@gmail.com";
+        var password1 = "12345678";
+        userService.createUser(email1, "User One", password1);
+
+        var user2 = userService.createUser("user2@gmail.com", "User Two", "1234567822");
+
+        System.out.println("A user should not be allowed to add an external project to another user");
+
+        UserExternalProjectRequest request = new UserExternalProjectRequest();
+        request.setExternalProjectId("external-project-7777");
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/users/{userId}/external-projects/", user2.id())
+                        .with(httpBasic(email1, password1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors[0]").value("Unauthorized to perform this action"));
+    }
+
+    @Test
+    void testDeleteDifferentUserShouldFail() throws Exception {
+        var email1 = "user1@gmail.com";
+        var password1 = "12345678";
+        userService.createUser(email1, "User One", password1);
+
+        var user2 = userService.createUser("user2@gmail.com", "User Two", "1234567822");
+
+        System.out.println("A user should not be allowed to delete another user that is not him");
+
+        UserExternalProjectRequest request = new UserExternalProjectRequest();
+        request.setExternalProjectId("external-project-7777");
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/users/{userId}/", user2.id())
+                        .with(httpBasic(email1, password1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors[0]").value("Unauthorized to perform this action"));
     }
 
 }

@@ -13,13 +13,13 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class UserServiceTest {
+class UserServiceIntTest {
 
     private UserService userService;
     private UserRepository userRepository;
 
     @Autowired
-    public UserServiceTest(UserService userService, UserRepository userRepository) {
+    public UserServiceIntTest(UserService userService, UserRepository userRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
     }
@@ -71,6 +71,16 @@ class UserServiceTest {
         assertEquals("User not found for id " + user.id(), exception.getMessage());
 
         assertEquals(0, userRepository.countExternalProjects(user.id()));
+    }
+
+    @Test
+    void addRepeatedExternalProjectsToUserShouldFail() {
+        var user = userService.createUser("repeatedProjectAdd@gmail.com", "Repeated Project", "theMostSecurePassword");
+        var externalIdProject = "external-id-" + UUID.randomUUID();
+        userService.addExternalProjectToUser(user.id(), externalIdProject);
+
+        var exception = Assertions.assertThrows(InvalidExternalProjectException.class, () -> userService.addExternalProjectToUser(user.id(), externalIdProject));
+        assertEquals("The external project id provided already exists", exception.getMessage());
     }
 
 

@@ -43,9 +43,7 @@ public class SecurityConfig {
     SecurityFilterChain allowUserCreationWithoutAuthentication(HttpSecurity http) throws Exception {
         return http
                 .securityMatcher("/users/")
-                .authorizeHttpRequests( auth -> {
-                    auth.requestMatchers(AntPathRequestMatcher.antMatcher("/users/"), AntPathRequestMatcher.antMatcher(HttpMethod.POST)).permitAll();
-                })
+                .authorizeHttpRequests( auth -> auth.requestMatchers(AntPathRequestMatcher.antMatcher("/users/"), AntPathRequestMatcher.antMatcher(HttpMethod.POST)).permitAll())
                 .csrf((AbstractHttpConfigurer::disable))
                 .build();
     }
