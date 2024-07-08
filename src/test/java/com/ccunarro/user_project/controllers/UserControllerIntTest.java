@@ -131,6 +131,23 @@ class UserControllerIntTest {
     }
 
     @Test
+    void testCreateUserEmptyPasswordFail() throws Exception {
+        UserRequest request = new UserRequest();
+        request.setEmail("myemail@gmail.com");
+        request.setName("My Name");
+
+        request.setPassword("");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/users/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors[0]").value("Invalid parameter 'password' size must be between 8 and 50"));
+    }
+
+    @Test
     void testCreateUserDuplicatedEmail() throws Exception {
         var email = "duplikated@gmail.com";
         userService.createUser(email, "Dupli Kated", "0394934sfhajdfhclsahds");
