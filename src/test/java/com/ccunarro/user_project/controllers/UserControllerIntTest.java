@@ -225,13 +225,8 @@ class UserControllerIntTest {
 
         System.out.println("A user should not be allowed to delete another user that is not him");
 
-        UserExternalProjectRequest request = new UserExternalProjectRequest();
-        request.setExternalProjectId("external-project-7777");
-
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/{userId}/", user2.id())
-                        .with(httpBasic(email1, password1))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .with(httpBasic(email1, password1)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors", hasSize(1)))
